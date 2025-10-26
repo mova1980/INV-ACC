@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>سامانه یکپارچه مواد کاران جاهد نوآور</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&display=swap');
+      :root {
+        --color-primary: #142440; /* Mavadkaran Dark Blue */
+        --color-secondary: #f8f8f8; /* Mavadkaran Light Gray */
+        --color-accent: #f18f1e; /* Mavadkaran Orange/Gold */
+        --color-text-primary: #1f2937;
+        --color-text-secondary: #6b7280;
+        --color-background: #f9fafb; 
+      }
+      body {
+        font-family: 'Vazirmatn', sans-serif;
+        background-color: var(--color-background);
+        background-image: url('https://mavadkaran.com/wp-content/uploads/2021/08/bg-section-2-1.png');
+        background-repeat: repeat;
+      }
+      .btn-primary {
+        background-color: var(--color-accent);
+        color: white;
+        transition: all 0.3s ease;
+        transform: translateY(0);
+      }
+      .btn-primary:hover {
+        background-color: #d87e16; /* Darker orange */
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        transform: translateY(-2px);
+      }
+      .btn-primary:disabled {
+        background-color: #f18f1e80;
+        cursor: not-allowed;
+        transform: translateY(0);
+        box-shadow: none;
+      }
+      .btn-secondary {
+        background-color: var(--color-secondary);
+        color: var(--color-text-primary);
+        border: 1px solid #dcdfe6;
+        transition: all 0.3s ease;
+      }
+      .btn-secondary:hover {
+        background-color: #e9ecef;
+        border-color: #adb5bd;
+      }
+      
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      
+      @keyframes slideInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      
+      @keyframes scaleUp {
+          from { transform: scale(0.95); }
+          to { transform: scale(1); }
+      }
+
+      @keyframes subtlePulse {
+        0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(241, 143, 30, 0.4); }
+        70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(241, 143, 30, 0); }
+        100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(241, 143, 30, 0); }
+      }
+      
+      .animate-fade-in {
+        animation: fadeIn 0.5s ease-out forwards;
+      }
+      
+      .animate-slide-in-up {
+        animation: slideInUp 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+      }
+
+      .list-item-animation {
+          opacity: 0; /* Start hidden */
+          animation: slideInUp 0.5s ease-out forwards;
+      }
+
+      .modal-backdrop-animation {
+          animation: fadeIn 0.3s ease-out forwards;
+      }
+
+      .modal-content-animation {
+          opacity: 0;
+          transform: scale(0.95);
+          animation: fadeIn 0.3s 0.1s ease-out forwards, scaleUp 0.3s 0.1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      }
+      
+      .animate-subtle-pulse {
+        animation: subtlePulse 2s infinite ease-in-out;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.26.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>

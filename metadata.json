@@ -1,0 +1,5 @@
+{
+  "name": "Inventory to Accounting Converter",
+  "description": "A web application that reads inventory documents like receipts and dispatches from a simulated database, and uses AI to convert them into standard accounting journal entries.",
+  "requestFramePermissions": []
+}
