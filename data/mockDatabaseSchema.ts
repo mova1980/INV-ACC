@@ -1,14 +1,13 @@
 export const mockServers = [
-  { id: 'SRV_INVENTORY', name: 'SRV_INVENTORY' },
+  { id: 'DESKTOP-AN6UFIH', name: 'DESKTOP-AN6UFIH' },
   { id: 'SRV_FINANCE', name: 'SRV_FINANCE' },
   { id: 'SRV_PROD_01', name: 'SRV_PROD_01' },
-  { id: 'SRV_TEST_DB', name: 'SRV_TEST_DB' },
 ];
 
 export const mockDatabases: { [server: string]: { id: string, name: string }[] } = {
-  SRV_INVENTORY: [
-    { id: 'InventoryDB', name: 'InventoryDB' },
-    { id: 'InventoryArchive', name: 'InventoryArchive' },
+  'DESKTOP-AN6UFIH': [
+    { id: 'INV', name: 'INV' },
+    { id: 'MASTER', name: 'MASTER' },
   ],
   SRV_FINANCE: [
     { id: 'AccountingDB', name: 'AccountingDB' },
@@ -18,21 +17,20 @@ export const mockDatabases: { [server: string]: { id: string, name: string }[] }
     { id: 'MainProduction', name: 'MainProduction' },
     { id: 'ERP_Core', name: 'ERP_Core' },
   ],
-  SRV_TEST_DB: [
-    { id: 'TestBed', name: 'TestBed' },
-  ]
 };
 
 export const mockTables: { [database: string]: { id: string, name: string }[] } = {
-    InventoryDB: [
-        { id: 'InvDocs', name: 'InvDocs' },
-        { id: 'InvDocItems', name: 'InvDocItems' },
-        { id: 'Products', name: 'Products' },
-        { id: 'Warehouses', name: 'Warehouses' },
-    ],
-    InventoryArchive: [
-        { id: 'InvDocs_2022', name: 'InvDocs_2022' },
-        { id: 'InvDocs_2023', name: 'InvDocs_2023' },
+    INV: [
+        { id: 'ray.InvHdrData', name: 'ray.InvHdrData' },
+        { id: 'ray.InvDtlData', name: 'ray.InvDtlData' },
+        { id: 'ray.itemdata', name: 'ray.itemdata' },
+        { id: 'ray.Store', name: 'ray.Store' },
+        { id: 'ray.InvDocTyp', name: 'ray.InvDocTyp' },
+        { id: 'ray.Unit', name: 'ray.Unit' },
+        { id: 'ray.Center', name: 'ray.Center' },
+        { id: 'ray.AcntAccHdr', name: 'ray.AcntAccHdr' },
+        { id: 'ray.AcntAccDtl', name: 'ray.AcntAccDtl' },
+        { id: 'ray.Account', name: 'ray.Account' },
     ],
     AccountingDB: [
         { id: 'AccDocs', name: 'AccDocs' },

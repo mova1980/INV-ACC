@@ -1,122 +1,221 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>سامانه یکپارچه مواد کاران جاهد نوآور</title>
+    <title>Inventory to Accounting Converter</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&display=swap');
-      :root {
-        --color-primary: #142440; /* Mavadkaran Dark Blue */
-        --color-secondary: #f8f8f8; /* Mavadkaran Light Gray */
-        --color-accent: #f18f1e; /* Mavadkaran Orange/Gold */
-        --color-text-primary: #1f2937;
-        --color-text-secondary: #6b7280;
-        --color-background: #f9fafb; 
-      }
-      body {
-        font-family: 'Vazirmatn', sans-serif;
-        background-color: var(--color-background);
-        background-image: url('https://mavadkaran.com/wp-content/uploads/2021/08/bg-section-2-1.png');
-        background-repeat: repeat;
-      }
-      .btn-primary {
-        background-color: var(--color-accent);
-        color: white;
-        transition: all 0.3s ease;
-        transform: translateY(0);
-      }
-      .btn-primary:hover {
-        background-color: #d87e16; /* Darker orange */
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        transform: translateY(-2px);
-      }
-      .btn-primary:disabled {
-        background-color: #f18f1e80;
-        cursor: not-allowed;
-        transform: translateY(0);
-        box-shadow: none;
-      }
-      .btn-secondary {
-        background-color: var(--color-secondary);
-        color: var(--color-text-primary);
-        border: 1px solid #dcdfe6;
-        transition: all 0.3s ease;
-      }
-      .btn-secondary:hover {
-        background-color: #e9ecef;
-        border-color: #adb5bd;
-      }
-      
-      @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-      }
-      
-      @keyframes slideInUp {
-        from {
-          opacity: 0;
-          transform: translateY(20px);
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --font-family-sans: 'Vazirmatn', sans-serif;
+            
+            /* Light Theme Palette */
+            --color-primary: #0d6efd;
+            --color-secondary: #6c757d;
+            --color-accent: #6366f1;
+            --color-success: #198754;
+            --color-danger: #dc3545;
+            --color-warning: #ffc107;
+            --color-info: #0dcaf0;
+
+            --background-primary: #f1f5f9; /* slate-100 */
+            --background-secondary: #ffffff;
+            --background-tertiary: #f8fafc; /* slate-50 */
+            
+            --text-primary: #1e293b; /* slate-800 */
+            --text-secondary: #475569; /* slate-600 */
+            --text-muted: #64748b; /* slate-500 */
+            --text-inverted: #ffffff;
+            
+            --border-color: #e2e8f0; /* slate-200 */
+            --border-color-strong: #cbd5e1; /* slate-300 */
         }
-        to {
-          opacity: 1;
-          transform: translateY(0);
+
+        html.dark {
+            /* Dark Theme Palette */
+            --color-primary: #032d5a;
+            --color-secondary: #a0aec0;
+            --color-accent: #38bdf8; /* sky-400 */
+            --color-success: #22c55e; /* green-500 */
+            --color-danger: #f43f5e; /* rose-500 */
+            --color-warning: #f59e0b; /* amber-500 */
+            --color-info: #38bdf8; /* sky-400 */
+
+            --background-primary: #0f172a; /* slate-900 */
+            --background-secondary: #1e293b; /* slate-800 */
+            --background-tertiary: #334155; /* slate-700 */
+
+            --text-primary: #e2e8f0; /* slate-200 */
+            --text-secondary: #94a3b8; /* slate-400 */
+            --text-muted: #64748b; /* slate-500 */
+            --text-inverted: #0f172a;
+
+            --border-color: #334155; /* slate-700 */
+            --border-color-strong: #475569; /* slate-600 */
         }
-      }
-      
-      @keyframes scaleUp {
-          from { transform: scale(0.95); }
-          to { transform: scale(1); }
-      }
 
-      @keyframes subtlePulse {
-        0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(241, 143, 30, 0.4); }
-        70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(241, 143, 30, 0); }
-        100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(241, 143, 30, 0); }
-      }
-      
-      .animate-fade-in {
-        animation: fadeIn 0.5s ease-out forwards;
-      }
-      
-      .animate-slide-in-up {
-        animation: slideInUp 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-      }
+        body {
+            font-family: var(--font-family-sans);
+            background-color: var(--background-primary);
+            color: var(--text-primary);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
 
-      .list-item-animation {
-          opacity: 0; /* Start hidden */
-          animation: slideInUp 0.5s ease-out forwards;
-      }
+        /* Animations & Motion Effects */
+        @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slide-in-up { from { transform: translateY(15px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes modal-backdrop-animation { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes modal-content-animation { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @keyframes list-item-animation { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes counter-pop { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
+        @keyframes icon-wiggle { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+        @keyframes icon-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
 
-      .modal-backdrop-animation {
-          animation: fadeIn 0.3s ease-out forwards;
-      }
+        .animate-fade-in { animation: fade-in 0.5s ease-out forwards; }
+        .animate-slide-in-up { animation: slide-in-up 0.5s ease-out forwards; }
+        .modal-backdrop-animation { animation: modal-backdrop-animation 0.3s ease-out forwards; }
+        .modal-content-animation { animation: modal-content-animation 0.3s ease-out forwards; }
+        .list-item-animation { animation: list-item-animation 0.4s ease-out backwards; }
+        .counter-animation { animation: counter-pop 0.3s ease-out; }
 
-      .modal-content-animation {
-          opacity: 0;
-          transform: scale(0.95);
-          animation: fadeIn 0.3s 0.1s ease-out forwards, scaleUp 0.3s 0.1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-      }
-      
-      .animate-subtle-pulse {
-        animation: subtlePulse 2s infinite ease-in-out;
-      }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--background-secondary); }
+        ::-webkit-scrollbar-thumb { background: var(--border-color-strong); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+        /* Base Button Styles */
+        .btn {
+            padding: 0.625rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease-out;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .btn:active {
+            transform: translateY(0) scale(0.98);
+            box-shadow: none;
+        }
+        .btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+            transform: none;
+            box-shadow: none;
+        }
+        .btn svg {
+            transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1.5); /* Adds a little bounce */
+        }
+        .btn:hover svg {
+            transform: scale(1.1);
+        }
+
+        /* Button Variants */
+        .btn-primary {
+            background-color: var(--color-accent);
+            color: var(--text-inverted);
+        }
+        .btn-primary:hover { background-color: color-mix(in srgb, var(--color-accent), #000 10%); }
+        .btn-primary:disabled { background-color: var(--text-muted); }
+
+        .btn-secondary {
+            background-color: var(--background-secondary);
+            color: var(--text-secondary);
+            border-color: var(--border-color-strong);
+        }
+        .btn-secondary:hover { background-color: var(--background-tertiary); color: var(--text-primary); border-color: var(--border-color-strong); }
+        
+        /* Form elements */
+        select, input[type="text"], input[type="number"], input[type="date"] {
+          background-color: var(--background-secondary);
+          border-color: var(--border-color-strong);
+          color: var(--text-primary);
+        }
+        select:focus, input:focus {
+          --tw-ring-color: var(--color-accent);
+          border-color: var(--color-accent);
+        }
+        
+        /* Header background */
+        .header-with-bg { position: relative; z-index: 1; }
+        .header-with-bg::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-image: url('https://busibell.com/wp-content/uploads/2025/10/asli.jpg'); background-size: cover; background-position: center; background-repeat: no-repeat; opacity: 0.2; z-index: -1; pointer-events: none; }
+        html.dark .header-with-bg::before { opacity: 0.25; }
+
+        /* Welcome screen background */
+        .welcome-bg { position: relative; }
+        .welcome-bg::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-image: url('https://busibell.com/wp-content/uploads/2025/10/asli.jpg'); background-size: cover; background-position: center; opacity: 0.03; z-index: 0; pointer-events: none; border-radius: 0.5rem; }
+        .welcome-bg > * { position: relative; z-index: 1; }
+        html.dark .welcome-bg::before { opacity: 0; }
+        
+        /* Table Row Hover Effect */
+        .animated-table tbody tr {
+            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+            position: relative; /* Needed for z-index and shadow */
+        }
+        .animated-table tbody tr:hover {
+            transform: scale(1.015);
+            z-index: 10;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+            background-color: var(--background-secondary); /* Ensure bg covers underlying rows */
+        }
+        .animated-table tbody tr:hover td:first-child { border-top-left-radius: 0.5rem; border-bottom-left-radius: 0.5rem; }
+        .animated-table tbody tr:hover td:last-child { border-top-right-radius: 0.5rem; border-bottom-right-radius: 0.5rem; }
+
+        /* Sidebar Item Hover Effect */
+        .sidebar-warehouse-btn {
+            position: relative;
+            overflow: hidden;
+        }
+        .sidebar-warehouse-btn::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--color-accent);
+            transform: scaleX(0);
+            transform-origin: right;
+            transition: transform 0.3s ease-out;
+        }
+        .sidebar-warehouse-btn:hover::before {
+            transform: scaleX(1);
+            transform-origin: left;
+        }
+
+        /* Specific Icon Animations on Hover */
+        #convert-btn:hover svg { animation: icon-wiggle 0.4s ease-in-out; }
+        #template-btn:hover svg { transform: rotate(-5deg) scale(1.1); }
+        #db-settings-btn:hover svg { animation: icon-pulse 0.6s infinite; }
+        #archive-btn:hover svg { transform: translateY(-2px) scale(1.05); }
+
     </style>
-  <script type="importmap">
+<script type="importmap">
 {
   "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
     "react/": "https://aistudiocdn.com/react@^19.2.0/",
     "react": "https://aistudiocdn.com/react@^19.2.0",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.26.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/"
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.27.0",
+    "jspdf": "https://aistudiocdn.com/jspdf@^2.5.1",
+    "jspdf-autotable": "https://aistudiocdn.com/jspdf-autotable@^3.8.2"
   }
 }
 </script>
 </head>
-  <body>
+<body>
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
-  </body>
+</body>
 </html>

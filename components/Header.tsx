@@ -1,23 +1,18 @@
 import React from 'react';
+import ThemeToggle from './ThemeToggle';
 
-const Header: React.FC = () => {
+interface Props {
+  onToggleTheme: () => void;
+  currentTheme: 'light' | 'dark';
+}
+
+const Header: React.FC<Props> = ({ onToggleTheme, currentTheme }) => {
   return (
-    <header className="bg-white shadow-md animate-fade-in">
-      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center gap-4">
-        <img 
-          src="https://busibell.com/wp-content/uploads/2025/10/Untitled.jpg" 
-          alt="لوگوی مواد کاران جاهد نوآور" 
-          className="h-14 object-contain"
-        />
-        <div>
-            <h1 className="text-xl font-bold text-[var(--color-primary)]">
-              سامانه یکپارچه مواد کاران جاهد نوآور
-            </h1>
-            <p className="text-sm text-[var(--color-text-secondary)] mt-1">
-              سیستم تبدیل اسناد انبار به حسابداری 
-            </p>
-        </div>
-      </div>
+    <header className="bg-[var(--background-secondary)] shadow-md p-3 flex justify-between items-center border-b border-[var(--border-color)] header-with-bg flex-shrink-0">
+      <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-accent)]">
+        سیستم تبدیل اسناد انبار به حسابداری
+      </h1>
+      <ThemeToggle onToggle={onToggleTheme} theme={currentTheme} />
     </header>
   );
 };

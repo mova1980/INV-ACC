@@ -132,7 +132,7 @@ const DatabaseSettingsModal: React.FC<Props> = ({ initialSettings, onSave, onClo
             <fieldset className="border rounded-lg p-4">
                 <legend className="px-2 font-semibold text-lg text-slate-700">مقصد (حسابداری)</legend>
                  <div className="space-y-4 mt-2">
-                    <ComboBox label="نام سرور SQL" options={serverOptions} value={settings.destination.server} onChange={val => handleChange('destination', 'server', val)} placeholder="انتخاب یا جستجوی سرور..." isLoading={isDestDbLoading} />
+                    <ComboBox label="نام سرور SQL" options={serverOptions} value={settings.destination.server} onChange={val => handleChange('destination', 'server', val)} placeholder="انتخاب یا جستجuy سرور..." isLoading={isDestDbLoading} />
                     <ComboBox label="نام دیتابیس" options={destDbOptions} value={settings.destination.database} onChange={val => handleChange('destination', 'database', val)} placeholder="انتخاب یا جستجوی دیتابیس..." disabled={!settings.destination.server || isDestDbLoading} isLoading={isDestTableLoading} />
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <ComboBox label="جدول هدر اسناد حسابداری" options={destTableOptions} value={settings.destination.headerTable} onChange={val => handleChange('destination', 'headerTable', val)} placeholder="انتخاب جدول..." disabled={!settings.destination.database || isDestTableLoading} />
@@ -143,8 +143,8 @@ const DatabaseSettingsModal: React.FC<Props> = ({ initialSettings, onSave, onClo
         </div>
 
         <div className="mt-auto pt-4 flex justify-end gap-4 border-t">
-            <button onClick={onClose} className="btn-secondary py-2 px-6 rounded-lg">انصراف</button>
-            <button onClick={handleSave} className="btn-primary py-2 px-6 rounded-lg">ذخیره تغییرات</button>
+            <button onClick={onClose} className="btn btn-secondary">انصراف</button>
+            <button onClick={handleSave} className="btn btn-primary">ذخیره تغییرات</button>
         </div>
       </div>
     </div>
