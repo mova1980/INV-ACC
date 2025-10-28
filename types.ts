@@ -1,12 +1,29 @@
-export enum DocumentType {
-  Receipt = 'Receipt', // رسید
-  Dispatch = 'Dispatch', // حواله
-}
+import { DocumentType } from './enums';
 
 export enum DocumentStatus {
     ReadyForConversion = 'آماده صدور',
     PartiallySettled = 'تسویه ناقص',
     Issued = 'سند صادر شده', // New Status
+}
+
+export enum ApprovalStatus {
+    Draft = 'پیش‌نویس',
+    Approved = 'تصویب شده',
+}
+
+export enum UserRole {
+    Admin = 'ادمین کل',
+    FinancialManager = 'مدیر مالی',
+    Accountant = 'حسابدار',
+    Storekeeper = 'انباردار',
+}
+
+export interface User {
+    id: number;
+    username: string;
+    name: string;
+    role: UserRole;
+    warehouseId?: number; // Only applicable for Storekeeper
 }
 
 export interface InventoryItem {
@@ -59,9 +76,11 @@ export interface JournalEntry {
 }
 
 export interface GeneratedDocInfo {
+  id: string;
   entry: JournalEntry;
   sourceDocIds: string[];
   sourceWarehouseNames: string[];
+  approvalStatus: ApprovalStatus;
 }
 
 
@@ -98,6 +117,9 @@ export interface AutoGenRuleHint {
 export interface Warehouse {
     id: number;
     name: string;
+    workshop: string;
+    manager: string;
+    location: string;
 }
 
 export interface DocTypeInfo {
@@ -138,4 +160,23 @@ export interface FilterState {
     dateTo: string;
     minAmount: number | '';
     maxAmount: number | '';
+}
+
+export type LogType = 'success' | 'error' | 'info';
+
+export interface LogEntry {
+    id: string;
+    timestamp: string;
+    userId: number;
+    userName: string;
+    type: LogType;
+    title: string;
+    details: string | Record<string, any>;
+}
+
+export interface ToastInfo {
+    id: number;
+    title: string;
+    message: string;
+    variant: 'success' | 'error' | 'info';
 }

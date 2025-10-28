@@ -5,6 +5,12 @@ import { ListBulletIcon } from './icons/ListBulletIcon';
 import { CheckCircleIcon } from './icons/CheckCircleIcon';
 import { XCircleIcon } from './icons/XCircleIcon';
 import { MagicWandIcon } from './icons/MagicWandIcon';
+import { DocumentDuplicateIcon } from './icons/DocumentDuplicateIcon';
+import { ChevronDownIcon } from './icons/ChevronDownIcon';
+import WarehouseSelectionModal from './WarehouseSelectionModal';
+import { useSortableData } from '../hooks/useSortableData';
+import { SortIcon } from './shared/SortIcon';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 interface Props {
   allDocuments: InventoryDocument[];
@@ -12,10 +18,12 @@ interface Props {
   docTypeInfos: DocTypeInfo[];
   accountingRules: AccountingRule[];
   onClose: () => void;
-  onInitiateConversion: (docs: InventoryDocument[]) => void;
+  onInitiateConsolidatedConversion: (docs: InventoryDocument[]) => void;
+  onInitiateIndividualConversion: (docs: InventoryDocument[]) => void;
 }
 
-const AllDocsModal: React.FC<Props> = ({ allDocuments, allWarehouses, docTypeInfos, accountingRules, onClose, onInitiateConversion }) => {
+const AllDocsModal: React.FC<Props> = ({ allDocuments, allWarehouses, docTypeInfos, accountingRules, onClose, onInitiateConsolidatedConversion, onInitiateIndividualConversion }) => {
+    useEscapeKey(onClose);
     const [filters, setFilters] = useState({
         templateStatus: 'all', // 'all', 'with', 'without'
         warehouseIds: new Set<string>(),
@@ -27,6 +35,10 @@ const AllDocsModal: React.FC<Props> = ({ allDocuments, allWarehouses, docTypeInf
     const [filteredDocuments, setFilteredDocuments] = useState<InventoryDocument[]>([]);
     const [hasSearched, setHasSearched] = useState(false);
     const [selectedDocIds, setSelectedDocIds] = useState<Set<string>>(new Set());
+    const [showWarehouseModal, setShowWarehouseModal] = useState(false);
+
+    // FIX: Explicitly provide the generic type to `useSortableData` to prevent TypeScript from inferring a too-narrow type for the sort key.
+    const { items: sortedDocs, requestSort, sortConfig } = useSortableData<InventoryDocument>(filteredDocuments, { key: 'date', direction: 'descending' });
 
     const activeRules = useMemo(() => accountingRules.filter(r => r.isActive), [accountingRules]);
 
@@ -54,6 +66,29 @@ const AllDocsModal: React.FC<Props> = ({ allDocuments, allWarehouses, docTypeInf
             return { ...prev, warehouseIds: newSet };
         });
     };
+    
+    const handleSelectAllWarehousesInModal = () => {
+        setFilters(prev => {
+            const newSet = new Set(prev.warehouseIds);
+            if (newSet.size === allWarehouses.length) {
+                newSet.clear();
+            } else {
+                allWarehouses.forEach(w => newSet.add(w.id.toString()));
+            }
+            return { ...prev, warehouseIds: newSet };
+        });
+    };
+
+    const warehouseSelectionTitle = useMemo(() => {
+        if (filters.warehouseIds.size === 0) return 'همه انبارها';
+        if (filters.warehouseIds.size === allWarehouses.length) return 'انتخاب همه';
+        if (filters.warehouseIds.size === 1) {
+            const id = filters.warehouseIds.values().next().value;
+            return allWarehouses.find(w => w.id.toString() === id)?.name || '';
+        }
+        return `${filters.warehouseIds.size} انبار انتخاب شده`;
+    }, [filters.warehouseIds, allWarehouses]);
+
 
     const handleSearch = () => {
         let results = allDocuments.filter(doc => {
@@ -81,7 +116,7 @@ const AllDocsModal: React.FC<Props> = ({ allDocuments, allWarehouses, docTypeInf
     };
 
     const selectableDocs = useMemo(() => 
-        filteredDocuments.filter(doc => doc.status === DocumentStatus.ReadyForConversion && docHasTemplate(doc)),
+        filteredDocuments.filter(doc => (doc.status === DocumentStatus.ReadyForConversion || doc.status === DocumentStatus.PartiallySettled) && docHasTemplate(doc)),
         [filteredDocuments, docHasTemplate]
     );
 
@@ -93,10 +128,18 @@ const AllDocsModal: React.FC<Props> = ({ allDocuments, allWarehouses, docTypeInf
         }
     };
     
-    const handleConfirmConversion = () => {
+    const handleIndividualConversion = () => {
         const selectedDocs = filteredDocuments.filter(doc => selectedDocIds.has(doc.id));
         if (selectedDocs.length > 0) {
-            onInitiateConversion(selectedDocs);
+            onInitiateIndividualConversion(selectedDocs);
+            onClose();
+        }
+    };
+    
+    const handleConsolidatedConversion = () => {
+        const selectedDocs = filteredDocuments.filter(doc => selectedDocIds.has(doc.id));
+        if (selectedDocs.length > 0) {
+            onInitiateConsolidatedConversion(selectedDocs);
             onClose();
         }
     };
@@ -119,15 +162,11 @@ const AllDocsModal: React.FC<Props> = ({ allDocuments, allWarehouses, docTypeInf
                     <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
                         {/* Warehouse Filter */}
                         <div className="lg:col-span-2">
-                            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">انبارها</label>
-                            <div className="flex flex-wrap gap-x-4 gap-y-1 max-h-24 overflow-y-auto p-1 rounded-md border border-[var(--border-color)]">
-                                {allWarehouses.map(w => (
-                                    <label key={w.id} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-[var(--background-tertiary)]">
-                                        <input type="checkbox" className="rounded" checked={filters.warehouseIds.has(w.id.toString())} onChange={() => handleWarehouseFilterChange(w.id.toString())} />
-                                        {w.name}
-                                    </label>
-                                ))}
-                            </div>
+                            <label htmlFor="wh-selector" className="block text-sm font-medium text-[var(--text-secondary)] mb-1">فیلتر انبار</label>
+                            <button id="wh-selector" onClick={() => setShowWarehouseModal(true)} className="btn btn-secondary w-full justify-between">
+                                <span className="truncate">{warehouseSelectionTitle}</span>
+                                <ChevronDownIcon />
+                            </button>
                         </div>
                         {/* Date Filters */}
                         <div>
@@ -182,20 +221,20 @@ const AllDocsModal: React.FC<Props> = ({ allDocuments, allWarehouses, docTypeInf
                                         onChange={handleSelectAllChange}
                                     />
                                 </th>
-                                <th className="p-2 font-medium">شماره سند</th>
-                                <th className="p-2 font-medium">تاریخ</th>
-                                <th className="p-2 font-medium w-1/4">نوع سند</th>
-                                <th className="p-2 font-medium w-1/4">انبار</th>
-                                <th className="p-2 font-medium">مبلغ کل</th>
-                                <th className="p-2 font-medium">وضعیت</th>
+                                <th className="p-2 font-medium"><button onClick={() => requestSort('docNo')} className="flex items-center gap-1">شماره سند<SortIcon direction={sortConfig?.key === 'docNo' ? sortConfig.direction : undefined} /></button></th>
+                                <th className="p-2 font-medium"><button onClick={() => requestSort('date')} className="flex items-center gap-1">تاریخ<SortIcon direction={sortConfig?.key === 'date' ? sortConfig.direction : undefined} /></button></th>
+                                <th className="p-2 font-medium w-1/4"><button onClick={() => requestSort('docTypeDescription')} className="flex items-center gap-1">نوع سند<SortIcon direction={sortConfig?.key === 'docTypeDescription' ? sortConfig.direction : undefined} /></button></th>
+                                <th className="p-2 font-medium w-1/4"><button onClick={() => requestSort('warehouseName')} className="flex items-center gap-1">انبار<SortIcon direction={sortConfig?.key === 'warehouseName' ? sortConfig.direction : undefined} /></button></th>
+                                <th className="p-2 font-medium"><button onClick={() => requestSort('totalAmount')} className="flex items-center gap-1">مبلغ کل<SortIcon direction={sortConfig?.key === 'totalAmount' ? sortConfig.direction : undefined} /></button></th>
+                                <th className="p-2 font-medium"><button onClick={() => requestSort('status')} className="flex items-center gap-1">وضعیت<SortIcon direction={sortConfig?.key === 'status' ? sortConfig.direction : undefined} /></button></th>
                                 <th className="p-2 font-medium">شابلون</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredDocuments.map(doc => {
+                            {sortedDocs.map(doc => {
                                 const statusInfo = getDocStatusInfo(doc.status);
                                 const hasTpl = docHasTemplate(doc);
-                                const isSelectable = doc.status === DocumentStatus.ReadyForConversion && hasTpl;
+                                const isSelectable = (doc.status === DocumentStatus.ReadyForConversion || doc.status === DocumentStatus.PartiallySettled) && hasTpl;
                                 return (
                                     <tr key={doc.id} className={`border-b border-[var(--border-color)] ${isSelectable ? 'hover:bg-[var(--background-tertiary)]' : 'opacity-60'}`}>
                                         <td className="p-2">
@@ -231,16 +270,35 @@ const AllDocsModal: React.FC<Props> = ({ allDocuments, allWarehouses, docTypeInf
                     </span>
                     <div className="flex items-center gap-4">
                         <button 
-                            onClick={handleConfirmConversion}
-                            className="btn btn-primary"
+                            onClick={handleIndividualConversion}
+                            className="btn btn-secondary"
                             disabled={selectedDocIds.size === 0}
                         >
                             <MagicWandIcon />
-                            تبدیل به سند حسابداری
+                            صدور سند انفرادی
+                        </button>
+                         <button 
+                            onClick={handleConsolidatedConversion}
+                            className="btn btn-primary"
+                            disabled={selectedDocIds.size < 2}
+                        >
+                            <DocumentDuplicateIcon />
+                            صدور سند تجمیعی
                         </button>
                         <button onClick={onClose} className="btn btn-secondary">بستن</button>
                     </div>
                 </div>
+
+                {showWarehouseModal && (
+                    <WarehouseSelectionModal
+                        isOpen={showWarehouseModal}
+                        onClose={() => setShowWarehouseModal(false)}
+                        warehouses={allWarehouses}
+                        selectedWarehouseIds={filters.warehouseIds}
+                        onWarehouseSelectionChange={handleWarehouseFilterChange}
+                        onSelectAllWarehouses={handleSelectAllWarehousesInModal}
+                    />
+                )}
             </div>
         </div>
     );

@@ -2,6 +2,11 @@ import React, { useState, useMemo } from 'react';
 import { InventoryDocument, Warehouse, AccountingRule, DocumentStatus } from '../types';
 import { getDocStatusInfo } from '../utils/statusUtils';
 import { DocumentDuplicateIcon } from './icons/DocumentDuplicateIcon';
+import { ChevronDownIcon } from './icons/ChevronDownIcon';
+import WarehouseSelectionModal from './WarehouseSelectionModal';
+import { useSortableData } from '../hooks/useSortableData';
+import { SortIcon } from './shared/SortIcon';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 interface Props {
   allDocuments: InventoryDocument[];
@@ -12,12 +17,17 @@ interface Props {
 }
 
 const BatchConversionModal: React.FC<Props> = ({ allDocuments, allWarehouses, accountingRules, onClose, onConfirm }) => {
+  useEscapeKey(onClose);
   const [filterWarehouseIds, setFilterWarehouseIds] = useState<Set<string>>(new Set());
   const [filterDateFrom, setFilterDateFrom] = useState('');
   const [filterDateTo, setFilterDateTo] = useState('');
   const [foundDocuments, setFoundDocuments] = useState<InventoryDocument[]>([]);
   const [selectedDocIds, setSelectedDocIds] = useState<Set<string>>(new Set());
   const [validationError, setValidationError] = useState('');
+  const [showWarehouseModal, setShowWarehouseModal] = useState(false);
+  
+  // FIX: Explicitly provide the generic type to `useSortableData` to prevent TypeScript from inferring a too-narrow type for the sort key.
+  const { items: sortedDocs, requestSort, sortConfig } = useSortableData<InventoryDocument>(foundDocuments, { key: 'date', direction: 'ascending' });
 
   const handleWarehouseFilterChange = (id: string) => {
     setFilterWarehouseIds(prev => {
@@ -30,6 +40,24 @@ const BatchConversionModal: React.FC<Props> = ({ allDocuments, allWarehouses, ac
         return newSet;
     });
   };
+  
+  const handleSelectAllWarehouses = () => {
+    if (filterWarehouseIds.size === allWarehouses.length) {
+        setFilterWarehouseIds(new Set());
+    } else {
+        setFilterWarehouseIds(new Set(allWarehouses.map(w => w.id.toString())));
+    }
+  };
+
+  const warehouseSelectionTitle = useMemo(() => {
+    if (filterWarehouseIds.size === 0) return 'همه انبارها';
+    if (filterWarehouseIds.size === allWarehouses.length) return 'انتخاب همه';
+    if (filterWarehouseIds.size === 1) {
+        const id = filterWarehouseIds.values().next().value;
+        return allWarehouses.find(w => w.id.toString() === id)?.name || '';
+    }
+    return `${filterWarehouseIds.size} انبار انتخاب شده`;
+  }, [filterWarehouseIds, allWarehouses]);
 
   const handleSearch = () => {
     setValidationError('');
@@ -106,15 +134,14 @@ const BatchConversionModal: React.FC<Props> = ({ allDocuments, allWarehouses, ac
         <div className="border border-[var(--border-color)] rounded-lg p-3 mb-4">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">انبارها (خالی برای همه)</label>
-                    <div className="flex flex-wrap gap-2 max-h-24 overflow-y-auto p-1 rounded-md border border-[var(--border-color)]">
-                        {allWarehouses.map(w => (
-                            <label key={w.id} className="flex items-center gap-2 text-sm p-1 rounded-md cursor-pointer hover:bg-[var(--background-tertiary)]">
-                                <input type="checkbox" className="rounded" checked={filterWarehouseIds.has(w.id.toString())} onChange={() => handleWarehouseFilterChange(w.id.toString())} />
-                                {w.name}
-                            </label>
-                        ))}
-                    </div>
+                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">انبار</label>
+                     <button
+                        onClick={() => setShowWarehouseModal(true)}
+                        className="btn btn-secondary w-full justify-between"
+                    >
+                        <span className="truncate">{warehouseSelectionTitle}</span>
+                        <ChevronDownIcon />
+                    </button>
                 </div>
                 <div>
                      <label htmlFor="dateFrom" className="block text-sm font-medium text-[var(--text-secondary)] mb-2">از تاریخ</label>
@@ -142,16 +169,16 @@ const BatchConversionModal: React.FC<Props> = ({ allDocuments, allWarehouses, ac
                       onChange={handleSelectAllChange}
                     />
                   </th>
-                  <th className="p-2 font-medium">شماره سند</th>
-                  <th className="p-2 font-medium">تاریخ</th>
-                  <th className="p-2 font-medium w-1/4">نوع سند</th>
-                   <th className="p-2 font-medium w-1/4">انبار</th>
-                  <th className="p-2 font-medium">مبلغ باقیمانده</th>
-                  <th className="p-2 font-medium">وضعیت</th>
+                  <th className="p-2 font-medium"><button onClick={() => requestSort('docNo')} className="flex items-center gap-1">شماره سند<SortIcon direction={sortConfig?.key === 'docNo' ? sortConfig.direction : undefined} /></button></th>
+                  <th className="p-2 font-medium"><button onClick={() => requestSort('date')} className="flex items-center gap-1">تاریخ<SortIcon direction={sortConfig?.key === 'date' ? sortConfig.direction : undefined} /></button></th>
+                  <th className="p-2 font-medium w-1/4"><button onClick={() => requestSort('docTypeDescription')} className="flex items-center gap-1">نوع سند<SortIcon direction={sortConfig?.key === 'docTypeDescription' ? sortConfig.direction : undefined} /></button></th>
+                  <th className="p-2 font-medium w-1/4"><button onClick={() => requestSort('warehouseName')} className="flex items-center gap-1">انبار<SortIcon direction={sortConfig?.key === 'warehouseName' ? sortConfig.direction : undefined} /></button></th>
+                  <th className="p-2 font-medium"><button onClick={() => requestSort('totalAmount')} className="flex items-center gap-1">مبلغ باقیمانده<SortIcon direction={sortConfig?.key === 'totalAmount' ? sortConfig.direction : undefined} /></button></th>
+                  <th className="p-2 font-medium"><button onClick={() => requestSort('status')} className="flex items-center gap-1">وضعیت<SortIcon direction={sortConfig?.key === 'status' ? sortConfig.direction : undefined} /></button></th>
                 </tr>
               </thead>
               <tbody>
-                {foundDocuments.map(doc => (
+                {sortedDocs.map(doc => (
                     <tr key={doc.id} className="border-b border-[var(--border-color)]">
                        <td className="p-2"><input type="checkbox" className="rounded" checked={selectedDocIds.has(doc.id)} onChange={e => handleCheckboxChange(doc.id, e.target.checked)} /></td>
                        <td className="p-2 font-mono">{doc.docNo}</td>
@@ -178,6 +205,17 @@ const BatchConversionModal: React.FC<Props> = ({ allDocuments, allWarehouses, ac
             <button onClick={handleConfirm} className="btn btn-primary" disabled={selectedDocIds.size === 0}>تبدیل اسناد انتخاب شده</button>
           </div>
         </div>
+
+        {showWarehouseModal && (
+            <WarehouseSelectionModal
+                isOpen={showWarehouseModal}
+                onClose={() => setShowWarehouseModal(false)}
+                warehouses={allWarehouses}
+                selectedWarehouseIds={filterWarehouseIds}
+                onWarehouseSelectionChange={handleWarehouseFilterChange}
+                onSelectAllWarehouses={handleSelectAllWarehouses}
+            />
+        )}
       </div>
     </div>
   );

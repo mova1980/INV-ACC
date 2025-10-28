@@ -3,6 +3,7 @@ import { DatabaseSettings } from '../types';
 import ComboBox, { Option } from './ComboBox';
 import { mockServers, mockDatabases, mockTables } from '../data/mockDatabaseSchema';
 import Spinner from './Spinner';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 interface Props {
   initialSettings: DatabaseSettings;
@@ -11,6 +12,7 @@ interface Props {
 }
 
 const DatabaseSettingsModal: React.FC<Props> = ({ initialSettings, onSave, onClose }) => {
+  useEscapeKey(onClose);
   const [settings, setSettings] = useState<DatabaseSettings>(initialSettings);
 
   const [serverOptions] = useState<Option[]>(mockServers.map(s => ({ value: s.id, label: s.name })));

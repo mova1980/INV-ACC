@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { AccountingRule, Warehouse, Account, CostCenterItem, RuleAction, DocTypeInfo, InventoryDocument } from '../types';
+import { AccountingRule, Warehouse, Account, CostCenterItem, RuleAction, DocTypeInfo, InventoryDocument, LogType, ToastInfo } from '../types';
 import { TrashIcon } from './icons/TrashIcon';
 import { PlusIcon } from './icons/PlusIcon';
 import { SparklesIcon } from './icons/SparklesIcon';
 import AutoTemplateModal from './AutoTemplateModal';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 interface Props {
   allDocuments: InventoryDocument[];
@@ -14,9 +15,12 @@ interface Props {
   costCenters: CostCenterItem[];
   onSave: (rules: AccountingRule[]) => void;
   onClose: () => void;
+  onLog: (type: LogType, title: string, details: string | Record<string, any>) => void;
+  onAddToast: (toast: Omit<ToastInfo, 'id'>) => void;
 }
 
-const TemplateModal: React.FC<Props> = ({ allDocuments, rules, warehouses, docTypeInfos, accounts, costCenters, onSave, onClose }) => {
+const TemplateModal: React.FC<Props> = ({ allDocuments, rules, warehouses, docTypeInfos, accounts, costCenters, onSave, onClose, onLog, onAddToast }) => {
+  useEscapeKey(onClose);
   const [editableRules, setEditableRules] = useState<AccountingRule[]>(JSON.parse(JSON.stringify(rules)));
   const [errors, setErrors] = useState<Record<string, any>>({});
   const [showAutoTemplateModal, setShowAutoTemplateModal] = useState(false);
@@ -235,6 +239,8 @@ const TemplateModal: React.FC<Props> = ({ allDocuments, rules, warehouses, docTy
             costCenters={costCenters}
             onClose={() => setShowAutoTemplateModal(false)}
             onGenerate={handleAppendGeneratedRules}
+            onLog={onLog}
+            onAddToast={onAddToast}
         />
       )}
     </>

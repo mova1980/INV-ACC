@@ -1,5 +1,6 @@
 import React from 'react';
 import { Warehouse } from '../types';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 interface Props {
   isOpen: boolean;
@@ -11,6 +12,7 @@ interface Props {
 }
 
 const WarehouseSelectionModal: React.FC<Props> = ({ isOpen, onClose, warehouses, selectedWarehouseIds, onWarehouseSelectionChange, onSelectAllWarehouses }) => {
+  useEscapeKey(onClose);
   if (!isOpen) return null;
   
   const allWarehousesSelected = selectedWarehouseIds.size === warehouses.length;

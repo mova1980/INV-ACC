@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from '@google/genai';
-import { InventoryDocument, JournalEntry, AccountingRule, Warehouse, Account, CostCenterItem, DocTypeInfo, AutoGenRuleHint } from '../types';
+import { InventoryDocument, JournalEntry, AccountingRule, Warehouse, Account, CostCenterItem, DocTypeInfo, AutoGenRuleHint, RuleAction } from '../types';
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
 
@@ -93,33 +93,30 @@ export const generateAccountingDocument = async (
     try {
         const response = await ai.models.generateContent({
             model: model,
-            // The `contents` property is now structured as an array of Content objects.
-            // Using a raw string for complex prompts can sometimes lead to parsing issues
-            // that cause generic network errors. This format is more robust.
-            contents: [{ parts: [{ text: prompt }] }],
+            contents: prompt,
             config: {
                 responseMimeType: 'application/json',
                 responseSchema: {
                     type: Type.OBJECT,
                     properties: {
-                        date: { type: Type.STRING },
-                        description: { type: Type.STRING },
-                        totalDebit: { type: Type.NUMBER },
-                        totalCredit: { type: Type.NUMBER },
+                        date: { type: Type.STRING, description: "The date of the accounting document in YYYY/MM/DD format." },
+                        description: { type: Type.STRING, description: "A general description for the entire accounting document." },
+                        totalDebit: { type: Type.NUMBER, description: "The sum of all debit amounts. Must equal totalCredit." },
+                        totalCredit: { type: Type.NUMBER, description: "The sum of all credit amounts. Must equal totalDebit." },
                         lines: {
                             type: Type.ARRAY,
                             items: {
                                 type: Type.OBJECT,
                                 properties: {
-                                    row: { type: Type.INTEGER },
-                                    accountCode: { type: Type.STRING },
-                                    accountName: { type: Type.STRING },
-                                    debit: { type: Type.NUMBER },
-                                    credit: { type: Type.NUMBER },
-                                    description: { type: Type.STRING },
-                                    costCenter1: { type: Type.STRING },
-                                    costCenter2: { type: Type.STRING },
-                                    costCenter3: { type: Type.STRING },
+                                    row: { type: Type.INTEGER, description: "The sequential line number of the journal entry." },
+                                    accountCode: { type: Type.STRING, description: "The unique code for the account." },
+                                    accountName: { type: Type.STRING, description: "The name of the account." },
+                                    debit: { type: Type.NUMBER, description: "The debit amount for the line. Should be 0 if credit is non-zero." },
+                                    credit: { type: Type.NUMBER, description: "The credit amount for the line. Should be 0 if debit is non-zero." },
+                                    description: { type: Type.STRING, description: "A detailed description for this specific journal line." },
+                                    costCenter1: { type: Type.STRING, description: "Optional. The ID for the first cost center. Should be an empty string if not applicable." },
+                                    costCenter2: { type: Type.STRING, description: "Optional. The ID for the second cost center. Should be an empty string if not applicable." },
+                                    costCenter3: { type: Type.STRING, description: "Optional. The ID for the third cost center. Should be an empty string if not applicable." },
                                 },
                                 required: ['row', 'accountCode', 'accountName', 'debit', 'credit', 'description']
                             }
@@ -142,7 +139,7 @@ export const generateAccountingDocument = async (
     } catch (error) {
         console.error('Error generating accounting document:', error);
         // Provide a more user-friendly error message in Persian, while still logging the technical details.
-        const technicalDetails = error instanceof Error ? error.message : String(error);
+        const technicalDetails = error instanceof Error ? error.message : JSON.stringify(error);
         throw new Error(`خطا در ارتباط با مدل هوش مصنوعی. لطفا دوباره تلاش کنید. جزئیات فنی: ${technicalDetails}`);
     }
 };
@@ -191,67 +188,80 @@ ${hintsText}
 - لیست مراکز هزینه: ${costCenters.map(c => `'${c.name}' (کد: ${c.id})`).join(', ')}
 
 **قوانین خروجی:**
-- برای هر ترکیب، یک آبجکت قانون کامل تولید کن.
-- \`docDescription\` باید شرحی مناسب و مرتبط با نوع سند و انبار باشد.
-- \`lineDescription\` برای هر آرتیکل باید به طور واضح عملیات را توصیف کند.
-- خروجی باید فقط و فقط یک آرایه JSON از آبجکت های قانون حسابداری باشد. هیچ متن اضافی یا توضیحی خارج از JSON قرار نده.
-- اطمینان حاصل کن که ساختار خروجی دقیقا مطابق با اسکیمای ارائه شده باشد.
-    `;
+- برای هر ترکیب، یک آبجکت قانون با \`docDescription\` و \`lineDescription\` مناسب تولید کن.
+- خروجی باید فقط یک آرایه JSON از آبجکت های قانون حسابداری باشد، دقیقا مطابق با اسکیمای ارائه شده.
+`;
 
     try {
         const response = await ai.models.generateContent({
             model: model,
-            contents: [{ parts: [{ text: prompt }] }],
+            contents: prompt,
             config: {
                 responseMimeType: "application/json",
                 responseSchema: {
                     type: Type.ARRAY,
+                    description: "An array of accounting rule objects.",
                     items: {
                         type: Type.OBJECT,
+                        description: "A single accounting rule (template).",
                         properties: {
-                            id: { type: Type.STRING, description: "یک شناسه منحصر به فرد مانند auto-gen-rule-1" },
-                            isActive: { type: Type.BOOLEAN, description: "همیشه باید true باشد" },
-                            warehouseId: { type: Type.INTEGER },
-                            docTypeCode: { type: Type.INTEGER },
-                            docDescription: { type: Type.STRING },
+                            warehouseId: { type: Type.INTEGER, description: "The related warehouse ID." },
+                            docTypeCode: { type: Type.INTEGER, description: "The related document type code." },
+                            docDescription: { type: Type.STRING, description: "A general description for the accounting rule." },
                             actions: {
                                 type: Type.ARRAY,
+                                description: "Array of debit/credit operations. Each rule must have at least one Debit and one Credit line.",
                                 items: {
                                     type: Type.OBJECT,
+                                    description: "A single debit or credit line in the journal entry.",
                                     properties: {
-                                        id: { type: Type.STRING, description: "یک شناسه منحصر به فرد مانند auto-gen-action-1" },
-                                        transactionType: { type: Type.STRING, description: "باید 'Debit' یا 'Credit' باشد" },
-                                        account: { type: Type.STRING, description: "کد حساب از لیست ارائه شده" },
+                                        transactionType: { type: Type.STRING, description: "Transaction type. Must be exactly 'Debit' or 'Credit'. Do not use Persian equivalents." },
+                                        account: { type: Type.STRING, description: "The account code from the provided list." },
                                         costCenters: {
                                             type: Type.OBJECT,
+                                            description: "An object for cost centers. It must include three keys: 'center1', 'center2', and 'center3'.",
                                             properties: {
-                                                center1: { type: Type.STRING },
-                                                center2: { type: Type.STRING },
-                                                center3: { type: Type.STRING },
+                                                center1: { type: Type.STRING, description: "First cost center code. Use an empty string if not applicable." },
+                                                center2: { type: Type.STRING, description: "Second cost center code. Use an empty string if not applicable." },
+                                                center3: { type: Type.STRING, description: "Third cost center code. Use an empty string if not applicable." },
                                             },
-                                            // FIX: The properties of costCenters are required according to the RuleAction type.
                                             required: ['center1', 'center2', 'center3'],
                                         },
-                                        // FIX: Added a description to make it consistent with other properties and potentially resolve a parser issue.
-                                        lineDescription: { type: Type.STRING, description: "شرح ردیف برای این آرتیکل" },
+                                        lineDescription: { type: Type.STRING, description: "The line description for this article." },
                                     },
-                                    required: ['id', 'transactionType', 'account', 'costCenters', 'lineDescription']
+                                    required: ['transactionType', 'account', 'costCenters', 'lineDescription']
                                 }
                             }
                         },
-                        required: ['id', 'isActive', 'warehouseId', 'docTypeCode', 'docDescription', 'actions']
+                        required: ['warehouseId', 'docTypeCode', 'docDescription', 'actions']
                     }
                 }
             }
         });
 
         const jsonText = response.text.trim();
-        const parsedResult = JSON.parse(jsonText) as AccountingRule[];
-        return parsedResult;
+        
+        type RawRule = Omit<AccountingRule, 'id' | 'isActive'> & {
+            actions: Omit<RuleAction, 'id'>[];
+        };
+        const parsedResult = JSON.parse(jsonText) as RawRule[];
+
+        // Post-process to add IDs and isActive flag. This is more robust.
+        const processedRules: AccountingRule[] = parsedResult.map((rawRule, ruleIndex) => ({
+            ...rawRule,
+            id: `auto-gen-rule-${Date.now()}-${ruleIndex}`,
+            isActive: true,
+            actions: rawRule.actions.map((rawAction, actionIndex) => ({
+                ...rawAction,
+                id: `auto-gen-action-${Date.now()}-${ruleIndex}-${actionIndex}`,
+            })),
+        }));
+
+        return processedRules;
 
     } catch (error) {
         console.error('Error generating accounting rules:', error);
-        const technicalDetails = error instanceof Error ? error.message : String(error);
+        const technicalDetails = error instanceof Error ? error.message : JSON.stringify(error);
         throw new Error(`خطا در تولید خودکار شابلون. جزئیات فنی: ${technicalDetails}`);
     }
 };

@@ -1,16 +1,16 @@
 import React, { useState, useMemo } from 'react';
 import { InventoryDocument } from '../types';
-import Spinner from './Spinner';
 import { CashIcon } from './icons/CashIcon';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 
 interface Props {
   docs: InventoryDocument[];
   onClose: () => void;
   onConfirm: (docs: InventoryDocument[], amount: number, date: string, description:string) => void;
-  isLoading: boolean;
 }
 
-const ConversionModal: React.FC<Props> = ({ docs, onClose, onConfirm, isLoading }) => {
+const ConversionModal: React.FC<Props> = ({ docs, onClose, onConfirm }) => {
+  useEscapeKey(onClose);
   const totalRemainingAmount = useMemo(() => {
     return docs.reduce((sum, doc) => sum + (doc.totalAmount - doc.convertedAmount), 0);
   }, [docs]);
@@ -42,6 +42,13 @@ const ConversionModal: React.FC<Props> = ({ docs, onClose, onConfirm, isLoading 
         setError('برای تبدیل چندین سند، وارد کردن تاریخ سند حسابداری الزامی است.');
         return;
     }
+    
+    const dateRegex = /^14\d{2}\/(0[1-9]|1[0-2])\/(0[1-9]|[12]\d|3[01])$/;
+    if (accountingDate.trim() && !dateRegex.test(accountingDate.trim())) {
+        setError('فرمت تاریخ صحیح نیست. لطفا از فرمت YYYY/MM/DD استفاده کنید (مثال: 1403/05/21).');
+        return;
+    }
+
     setError('');
     const finalDate = accountingDate.trim() || (docs.length === 1 ? docs[0].date : '');
     onConfirm(docs, amountToConvert, finalDate, accountingDescription);
@@ -101,16 +108,9 @@ const ConversionModal: React.FC<Props> = ({ docs, onClose, onConfirm, isLoading 
         </div>
 
         <div className="mt-auto pt-6 flex justify-end gap-4 border-t border-[var(--border-color)]">
-            <button onClick={onClose} className="btn btn-secondary" disabled={isLoading}>انصراف</button>
-            <button onClick={handleConfirm} className="btn btn-primary min-w-48" disabled={isLoading || amountToConvert <= 0}>
-                {isLoading ? (
-                    <>
-                        <Spinner/>
-                        <span>در حال پردازش...</span>
-                    </>
-                ) : (
-                    "تولید سند حسابداری"
-                )}
+            <button onClick={onClose} className="btn btn-secondary">انصراف</button>
+            <button onClick={handleConfirm} className="btn btn-primary min-w-48" disabled={amountToConvert <= 0}>
+                تولید سند حسابداری
             </button>
         </div>
       </div>

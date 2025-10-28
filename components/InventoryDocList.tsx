@@ -2,6 +2,8 @@ import React from 'react';
 import { InventoryDocument } from '../types';
 import { getDocStatusInfo } from '../utils/statusUtils';
 import { DocumentStatus } from '../types';
+import { useSortableData } from '../hooks/useSortableData';
+import { SortIcon } from './shared/SortIcon';
 
 interface Props {
   docs: InventoryDocument[];
@@ -13,6 +15,17 @@ interface Props {
 }
 
 const InventoryDocList: React.FC<Props> = ({ docs, onSelectDoc, selectedDocId, onCheckboxChange, selectedDocIds, warehouseSelectionTitle }) => {
+  // FIX: Explicitly provide the generic type to `useSortableData` to prevent TypeScript from inferring a too-narrow type for the sort key.
+  const { items: sortedDocs, requestSort, sortConfig } = useSortableData<InventoryDocument>(docs, { key: 'date', direction: 'descending' });
+  
+  const headers: { key: keyof InventoryDocument, label: string }[] = [
+      { key: 'docNo', label: 'شماره سند' },
+      { key: 'date', label: 'تاریخ' },
+      { key: 'docTypeDescription', label: 'نوع سند' },
+      { key: 'totalAmount', label: 'مبلغ کل' },
+      { key: 'status', label: 'وضعیت' },
+  ];
+
   return (
     <div className="bg-[var(--background-secondary)] border border-[var(--border-color)] rounded-xl shadow-sm overflow-hidden animate-fade-in">
       <h3 className="text-lg font-bold p-4 border-b border-[var(--border-color)] text-[var(--text-primary)]">
@@ -23,15 +36,18 @@ const InventoryDocList: React.FC<Props> = ({ docs, onSelectDoc, selectedDocId, o
           <thead className="sticky top-0 bg-[var(--background-tertiary)] text-[var(--text-secondary)] z-20">
             <tr>
               <th className="p-3 w-10"><input type="checkbox" className="rounded" /></th>
-              <th className="p-3 font-semibold">شماره سند</th>
-              <th className="p-3 font-semibold">تاریخ</th>
-              <th className="p-3 font-semibold w-1/3">نوع سند</th>
-              <th className="p-3 font-semibold">مبلغ کل</th>
-              <th className="p-3 font-semibold">وضعیت</th>
+              {headers.map((header) => (
+                <th key={header.key} className="p-3 font-semibold">
+                    <button onClick={() => requestSort(header.key)} className="flex items-center gap-1">
+                        {header.label}
+                        <SortIcon direction={sortConfig?.key === header.key ? sortConfig.direction : undefined} />
+                    </button>
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-[var(--border-color)]">
-            {docs.map((doc) => {
+            {sortedDocs.map((doc) => {
               const statusInfo = getDocStatusInfo(doc.status);
               const remainingAmount = doc.totalAmount - doc.convertedAmount;
               const isSelectable = doc.status !== DocumentStatus.Issued && remainingAmount > 0;
